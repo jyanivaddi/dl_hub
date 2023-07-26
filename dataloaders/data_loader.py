@@ -7,7 +7,6 @@ from albumentations.pytorch import ToTensorV2
 from torch.utils.data import Dataset, DataLoader
 
 
-
 class CifarDataset(Dataset):
 
     def __init__(self, dataset, transforms=None):

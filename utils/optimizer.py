@@ -1,4 +1,3 @@
-from torch_lr_finder import LRFinder
 import torch.optim as optim
 from torch.optim.lr_scheduler import OneCycleLR
 
