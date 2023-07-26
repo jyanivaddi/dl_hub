@@ -1,3 +1,4 @@
+import torchinfo
 import numpy as np
 from torchvision import transforms
 import numpy as np
@@ -35,4 +36,22 @@ def un_normalize_image(img):
     un_norm_transform = transforms.Compose([transforms.Normalize((0.,0.,0.,),(1./0.247,1./0.244,1./0.262)),
                                                  transforms.Normalize((-0.491,-0.482,-0.447),(1.0,1.0,1.0))])
     return un_norm_transform(img)
+
+
+def get_device():
+    use_cuda = torch.cuda.is_available()
+    return torch.device("cuda" if use_cuda else "cpu")
+
+
+def model_summary(model, input_size):
+    torchinfo.summary(model, 
+                      input_size = input_size, 
+                      batch_dim=0, 
+                      col_names=("kernel_size",
+                                 "input_size",
+                                 "output_size",
+                                 "num_params",
+                                 "mult_adds"),
+                       verbose=1,) 
+
 

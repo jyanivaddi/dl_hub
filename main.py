@@ -1,10 +1,14 @@
-import torch.nn.functional as F
-from torchsummary import summary
-from tqdm import tqdm
 import torch
+import torch.optim as optim
+import torch.nn.functional as F
+import models.resnet 
+from torch.optim.lr_scheduler import OneCycleLR
+from tqdm import tqdm
+from utils.utils import get_device
+from dataloaders.data_loader import load_dataset
 
 
-def model_test(model, device, test_loader, loss_func, test_acc, test_losses):
+def validate_the_model(model, device, test_loader, loss_func, test_acc, test_losses):
     model.eval()
     test_loss = 0
     correct = 0
@@ -26,7 +30,7 @@ def model_test(model, device, test_loader, loss_func, test_acc, test_losses):
     return 
 
 
-def training_loop(model, device, train_loader, optimizer, scheduler, loss_func, train_acc, train_losses):
+def train_the_model(params, model, device, train_loader, optimizer, scheduler, loss_func, train_acc, train_losses):
     model.train()
     pbar = tqdm(train_loader)
     train_loss = 0
@@ -40,7 +44,8 @@ def training_loop(model, device, train_loader, optimizer, scheduler, loss_func, 
         train_loss+=loss.item()
         loss.backward()
         optimizer.step()
-        scheduler.step()
+        if scheduler and params['scheduler_type'].upper() == 'ONECYCLELR':
+            scheduler.step()
         correct+= output.argmax(dim=1).eq(target).sum().item()
         processed+= len(data)
         pbar.set_description(desc= f'loss={loss.item()} batch_id={batch_idx} Accuracy = {100*correct/processed:0.2f}')
@@ -49,78 +54,104 @@ def training_loop(model, device, train_loader, optimizer, scheduler, loss_func, 
     train_losses.append(train_loss/len(train_loader))
     return  
 
-def setup_model():
-    use_cuda = torch.cuda.is_available()
-    device = torch.device("cuda" if use_cuda else "cpu")
-    resnet_model = CustomResnet(base_channels=3,num_classes=10).to(device)
-    model_summary(resnet_model, input_size=(3,32,32))
 
-    train_transforms = A.Compose(
-        [
-            AA.crops.transforms.RandomResizedCrop(height = 32,width = 32,p=0.2),
-            A.HorizontalFlip(p=0.2),
-            AA.dropout.coarse_dropout.CoarseDropout(max_holes = 1, max_height=8,
-                                                    max_width=8, min_holes = 1,
-                                                    min_height=8, min_width=8,
-                                                    fill_value=(0.491, 0.482, 0.447),
-                                                    mask_fill_value = None),
-    
-            A.Normalize(mean=(0.491,0.482,0.447),std=(0.247,0.244,0.262)),
-            ToTensorV2(),
-        ]
-    )
-    test_transforms = A.Compose([
-    
-        A.Normalize(mean=(0.491,0.482,0.447),std=(0.247,0.244,0.262)),
-        ToTensorV2(),
-    ])
+def define_model(params):
+    model_type = params['model_type']
+    if model_type.upper() == 'RESNET18':
+        model = models.resnet.ResNet18()
+    return model
 
-    torch.manual_seed(1)
-    batch_size = 512
-    kwargs = {'num_workers': 2, 'pin_memory': True} if use_cuda else {}
-    train_loader, test_loader, class_names = load_cifar10_data(train_transforms, test_transforms, batch_size, **kwargs)
 
-    # Reload train and test loader to preview augmentations
-    torch.manual_seed(1)
-    batch_size = 512
-    kwargs = {'num_workers': 2, 'pin_memory': True} if use_cuda else {}
-    eg_train_loader, eg_test_loader, eg_class_names = load_cifar10_data(train_transforms= A.Compose([A.Normalize(mean=(0.491,0.482,0.447),std=(0.247,0.244,0.262)),ToTensorV2()]), test_transforms=A.Compose([A.Normalize(mean=(0.491,0.482,0.447),std=(0.247,0.244,0.262)),ToTensorV2()]), batch_size=32, **kwargs)
+def define_optimizer(params, model):
+    optimizer_type = params['optimizer_type']
+    optimizer_params = params['optimizer_params']
+    if optimizer_type.upper() == 'ADAM':
+        if 'weight_decay' in optimizer_params:
+            weight_decay = optimizer_params['weight_decay']
+        else:
+            weight_decay =  1e-4
+        optimizer = optim.Adam(model.parameters(), 
+                               lr = optimizer_params['lr'], 
+                               weight_decay=weight_decay)
+    elif optimizer_type.upper() == 'SGD':
+        if 'weight_decay' in optimizer_params:
+            weight_decay = optimizer_params['weight_decay']
+        else:
+            weight_decay =  5e-4
+        if 'momentum' in optimizer_params:
+            momentum = optimizer_params['momentum']
+        else:
+            momentum = 0.9
+        optimizer = optim.SGD(model.parameters(),
+                              lr=optimizer_params['lr'],
+                              momentum=momentum,
+                              weight_decay=weight_decay)
+    return optimizer
 
-    # Random Resized Crop
-    img_transforms = A.Compose([AA.crops.transforms.RandomResizedCrop(height= 32,width = 32,p=0.2)])
-    preview_augmentations(eg_train_loader, img_transforms)
 
-    # Horizontal Flip
-    img_transforms = A.Compose([A.HorizontalFlip(always_apply=True)])
-    preview_augmentations(eg_train_loader, img_transforms)
+def define_scheduler(params, optimizer):
+    scheduler_type = params['scheduler_type']
+    scheduler_params = params['scheduler_params']
+    if scheduler_type.upper() == 'ONECYCLELR':
+        scheduler = OneCycleLR(
+            optimizer, 
+            max_lr = scheduler_params['max_lr'], 
+            steps_per_epoch = scheduler_params['num_steps_per_epoch'],
+            epochs = params['num_epochs'], 
+            pct_start = scheduler_params['pct_start'],
+            div_factor = scheduler_params['div_factor'], 
+            three_phase = scheduler_params['three_phase'], 
+            final_div_factor = scheduler_params['final_div_factor'], 
+            anneal_strategy = scheduler_params['anneal_strategy'], 
+            verbose=True)
+    elif scheduler.upper() == 'REDUCELRONPLATEAU':
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, 
+            mode=scheduler_params['mode'], 
+            factor=scheduler_params['factor'], 
+            patience=scheduler_params['patience'], 
+            threshold=scheduler_params['threshold'],
+            verbose=True)
+    else:
+        scheduler = None
+    return scheduler
 
-    # Cut out
-    img_transforms = A.Compose([AA.dropout.coarse_dropout.CoarseDropout(max_holes = 1, max_height=8,
-                                                    max_width=8, min_holes = 1,
-                                                    min_height=8, min_width=8,
-                                                    fill_value=(0.491, 0.482, 0.447),
-                                                    mask_fill_value = None, always_apply=True)])
-    preview_augmentations(eg_train_loader, img_transforms)
 
-    preview_images(train_loader,class_names, num_rows = 5, num_cols = 5)
+def get_dataset(params):
+    dataset_name = params['dataset_name']
+    train_transforms = params['train_transforms']
+    test_transforms = params['test_transforms']
+    batch_size = params['batch_size']
+    num_workers = params['num_workers']
+    kwargs = {'num_workers': num_workers, 'pin_memory': True} if torch.cuda.is_available() else {}
+    train_loader, test_loader, class_names = load_dataset(dataset_name, train_transforms, test_transforms, batch_size, **kwargs)
+    return train_loader, test_loader, class_names
 
+
+def build_model(model, device, train_loader, test_loader, optimizer, scheduler, params):
     train_losses = []
     test_losses = []
     train_acc = []
     test_acc = []
     lr_values = []
-    max_lr = 4.65e-2
-    # Define scheduler
-    optim_obj.define_scheduler(max_lr)
+    num_epochs = params['num_epochs']
+    criterion = params['criterion']
 
     for epoch in range(1,num_epochs+1):
-        lr_values.append(optim_obj.scheduler.get_lr())
-        print(f"epoch: {epoch}\t learning rate: {optim_obj.scheduler.get_last_lr()[0]}")
-        this_train_loss = training_loop(resnet_model, device, train_loader, optim_obj.optimizer, optim_obj.scheduler, criterion, train_acc, train_losses)
-        this_loss = model_test(resnet_model, device, test_loader, criterion, test_acc, test_losses)
-        #optim_obj.scheduler.step()
-    plot_lr_values(this_scheduler, num_epochs, len(train_loader))
-    plot_losses(train_losses, test_losses)
-    plot_accuracy(train_acc, test_acc, target_test_acc=90.)
-    print_train_log(train_acc, test_acc, train_losses, test_losses)
-j
+        lr_values.append(scheduler.get_lr())
+        print(f"epoch: {epoch}\t learning rate: {scheduler.get_last_lr()[0]}")
+        train_the_model(model, device, train_loader, optimizer, scheduler, criterion, train_acc, train_losses)
+        validate_the_model(model, device, test_loader, criterion, test_acc, test_losses)
+        if scheduler:
+            scheduler.step()
+    return train_losses, test_losses, train_acc, test_acc
+
+
+def setup_model(params):
+    device = get_device()
+    torch.manual_seed(1)
+    train_loader, test_loader, class_names = get_dataset(params)
+    model = define_model(params)
+    optimizer = define_optimizer(params, model)
+    scheduler = define_scheduler(params, optimizer)
+    return device, train_loader, test_loader, class_names, model, optimizer, scheduler

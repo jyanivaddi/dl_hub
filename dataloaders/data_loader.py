@@ -7,7 +7,7 @@ from albumentations.pytorch import ToTensorV2
 from torch.utils.data import Dataset, DataLoader
 
 
-class CifarDataset(Dataset):
+class CustomLoader(Dataset):
 
     def __init__(self, dataset, transforms=None):
         self.transforms = transforms
@@ -26,10 +26,10 @@ class CifarDataset(Dataset):
         return (image, label)
 
 
-def load_cifar10_data(train_transforms, test_transforms, batch_size, **kwargs):
-    train_data = datasets.CIFAR10('../data', train=True, download=True)
-    test_data = datasets.CIFAR10('../data', train=False, download=True)
-    class_names = {"0": "airplane",
+def load_dataset(dataset_name, train_transforms, test_transforms, batch_size, **kwargs):
+    if dataset_name.upper() == 'CIFAR10':
+        torch_dataset = datasets.CIFAR10
+        class_names = {"0": "airplane",
                "1": "automobile",
                "2": "bird",
                "3": "cat",
@@ -39,11 +39,14 @@ def load_cifar10_data(train_transforms, test_transforms, batch_size, **kwargs):
                "7": "horse",
                "8": "ship",
                "9": "truck"}
-    train_loader = DataLoader(CifarDataset(train_data, transforms = train_transforms),
+
+    train_data = torch_dataset('../data', train=True, download=True)
+    test_data = torch_dataset('../data', train=False, download=True)
+    train_loader = DataLoader(CustomLoader(train_data, transforms = train_transforms),
                               batch_size=batch_size, 
                               shuffle=True, 
                               **kwargs)
-    test_loader = DataLoader(CifarDataset(test_data, transforms = test_transforms),
+    test_loader = DataLoader(CustomLoader(test_data, transforms = test_transforms),
                              batch_size=batch_size, 
                              shuffle=True, 
                              **kwargs)
