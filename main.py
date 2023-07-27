@@ -136,6 +136,7 @@ def build_model(model, device, train_loader, test_loader, optimizer, scheduler, 
     lr_values = []
     num_epochs = params['num_epochs']
     loss_func = params['loss_func']
+    model = model.to(device)
 
     for epoch in range(1,num_epochs+1):
         lr_values.append(optimizer.param_groups[0]['lr'])
