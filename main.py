@@ -27,7 +27,7 @@ def validate_the_model(model, device, test_loader, loss_func, test_acc, test_los
         test_loss, correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)))
     test_losses.append(test_loss)
-    return 
+    return test_loss
 
 
 def train_the_model(params, model, device, train_loader, optimizer, scheduler, loss_func, train_acc, train_losses):
@@ -141,9 +141,12 @@ def build_model(model, device, train_loader, test_loader, optimizer, scheduler, 
         lr_values.append(optimizer.param_groups[0]['lr'])
         print(f"epoch: {epoch}\t learning rate: {lr_values[-1]}")
         train_the_model(params, model, device, train_loader, optimizer, scheduler, loss_func, train_acc, train_losses)
-        validate_the_model(model, device, test_loader, loss_func, test_acc, test_losses)
+        test_loss = validate_the_model(model, device, test_loader, loss_func, test_acc, test_losses)
         if scheduler:
-            scheduler.step()
+            if params['scheduler_type'].upper() == 'REDUCELRONPLATEAU':
+                scheduler.step(test_loss)
+            else:
+                scheduler.step()
     return train_losses, test_losses, train_acc, test_acc
 
 
