@@ -138,7 +138,7 @@ def build_model(model, device, train_loader, test_loader, optimizer, scheduler, 
     loss_func = params['loss_func']
 
     for epoch in range(1,num_epochs+1):
-        lr_values.append(scheduler.get_lr())
+        lr_values.append(optimizer.param_groups[0]['lr'])
         print(f"epoch: {epoch}\t learning rate: {scheduler.get_last_lr()[0]}")
         train_the_model(model, device, train_loader, optimizer, scheduler, loss_func, train_acc, train_losses)
         validate_the_model(model, device, test_loader, loss_func, test_acc, test_losses)
