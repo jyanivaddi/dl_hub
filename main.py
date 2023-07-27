@@ -148,7 +148,7 @@ def build_model(model, device, train_loader, test_loader, optimizer, scheduler, 
                 scheduler.step(test_loss)
             else:
                 scheduler.step()
-    return train_losses, test_losses, train_acc, test_acc
+    return train_losses, test_losses, train_acc, test_acc, lr_values
 
 
 def setup_model(params):

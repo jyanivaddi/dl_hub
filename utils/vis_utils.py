@@ -33,10 +33,24 @@ def preview_images(train_loader, class_names, num_rows = 5, num_cols = 5):
     plt.show()
 
 
-def show_incorrect_predictions(incorrect_predictions, class_names, num_rows = 5, num_cols = 5):
-    cnt = 0
+def plot_image_grid(images_list, titles_list, num_rows, num_cols):
     num_images_to_preview = num_rows*num_cols
     fig = plt.figure()
+    for cnt, this_img in enumerate(images_list):
+        ax = fig.add_subplot(num_rows, num_cols, cnt+1,xticks=[],yticks=[])
+        plt.subplot(num_rows,num_cols,cnt+1)
+        plt.imshow(this_img.transpose((1,2,0)))
+        title_str = titles_list[cnt]
+        ax.set_title(title_str,fontsize=8)
+        if cnt == num_images_to_preview:
+            break
+    plt.tight_layout()
+    plt.show()
+
+
+def show_incorrect_predictions(incorrect_predictions, grad_cam_map_list, class_names, num_rows = 5, num_cols = 5):
+    incorrect_predictions_numpy_list = []
+    titles_list = []
     for this_pred in incorrect_predictions:
         orig_img = this_pred[0]
         inv_transforms = transforms.Compose([transforms.Normalize((0.,0.,0.,),
@@ -45,19 +59,15 @@ def show_incorrect_predictions(incorrect_predictions, class_names, num_rows = 5,
                                                              (1.0,1.0,1.0))])
         target_label = this_pred[1]
         predicted_label = this_pred[2]
-        output_label = this_pred[3]
         un_normalized_tensor_img = inv_transforms(orig_img.squeeze())
         un_normalized_numpy_img = np.asarray(un_normalized_tensor_img)
-        ax = fig.add_subplot(num_rows, num_cols, cnt+1,xticks=[],yticks=[])
-        plt.subplot(num_rows,num_cols,cnt+1)
-        plt.imshow(un_normalized_numpy_img.transpose((1,2,0)))
+        incorrect_predictions_numpy_list.append(un_normalized_numpy_img.transpose((1,2,0)))
         title_str = f"{class_names[str(target_label.item())]}/{class_names[str(predicted_label.item())]}"
-        ax.set_title(title_str,fontsize=8)
-        cnt+=1
-        if cnt == num_images_to_preview:
-            break
-    #plt.tight_layout()
-    plt.show()
+        titles_list.append(title_str)
+    # show incorrect predictions
+    plot_image_grid(incorrect_predictions_numpy_list, titles_list, num_rows, num_cols)
+    # show grad cam maps of incorrect predictions
+    plot_image_grid(grad_cam_map_list, titles_list, num_rows, num_cols)
 
 
 def plot_statistics(train_losses, train_acc, test_losses, test_acc, target_test_acc = 99):
@@ -71,31 +81,6 @@ def plot_statistics(train_losses, train_acc, test_losses, test_acc, target_test_
     axs[0, 1].axhline(target_test_acc, color='r')
     axs[0, 0].legend(('Train','Test'),loc='best')
     axs[1, 0].set_title("Accuracy")
-
-
-def plot_statistics_groups(train_losses_list, train_acc_list, test_losses_list, test_acc_list, target_test_acc = 99):
-    fig, axs = plt.subplots(2, 2, figsize=(15, 10))
-    axs[0, 0].plot(range(1,20),train_losses_list[0])
-    axs[0,0].plot(range(1,20),train_losses_list[1])
-    axs[0,0].plot(range(1,20),train_losses_list[2])
-    axs[0, 0].set_title("Training Loss per epoch")
-    axs[0,0].legend(["BatchNorm","LayerNorm","GroupNorm"],loc='best')
-    axs[1, 0].plot(range(1,20),train_acc_list[0])
-    axs[1,0].plot(range(1,20),train_acc_list[1])
-    axs[1,0].plot(range(1,20),train_acc_list[2])
-    axs[1, 0].set_title("Training Accuracy per epoch")
-    axs[1,0].legend(["BatchNorm","LayerNorm","GroupNorm"],loc='best')
-    axs[0, 1].plot(range(1,20),test_losses_list[0])
-    axs[0,1].plot(range(1,20),test_losses_list[1])
-    axs[0,1].plot(range(1,20),test_losses_list[2])
-    axs[0, 1].set_title("Test Loss per epoch")
-    axs[0,1].legend(["BatchNorm","LayerNorm","GroupNorm"],loc='best')
-    axs[1, 1].plot(range(1,20),test_acc_list[0])
-    axs[1,1].plot(range(1,20),test_acc_list[1])
-    axs[1,1].plot(range(1,20),test_acc_list[2])
-    axs[1, 1].axhline(target_test_acc, color='r')
-    axs[1, 1].set_title("Test Accuracy per epoch")
-    axs[1,1].legend(["BatchNorm","LayerNorm","GroupNorm"],loc='best')
 
 
 def preview_augmentations(train_loader, image_transform):
