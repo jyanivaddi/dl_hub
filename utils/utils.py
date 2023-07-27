@@ -12,7 +12,7 @@ import numpy as np
 
 
 
-def compute_grad_cam_map(model, target_layers, input_tensor, targets, image_weight=0.2):
+def compute_grad_cam_map(model, target_layers, input_tensor, targets=None , image_weight=0.2):
     # Construct the CAM object once, and then re-use it on many images:
     cam = GradCAM(model=model, target_layers=target_layers, use_cuda=True)
     # You can also pass aug_smooth=True and eigen_smooth=True, to apply smoothing.
