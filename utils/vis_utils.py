@@ -33,14 +33,14 @@ def preview_images(train_loader, class_names, num_rows = 5, num_cols = 5):
     plt.show()
 
 
-def plot_image_grid(images_list, titles_list, num_rows, num_cols):
+def plot_image_grid(images_list, prediction_list, ground_truth_list, num_rows, num_cols):
     num_images_to_preview = num_rows*num_cols
     fig = plt.figure()
     for cnt, this_img in enumerate(images_list):
         ax = fig.add_subplot(num_rows, num_cols, cnt+1,xticks=[],yticks=[])
         plt.subplot(num_rows,num_cols,cnt+1)
         plt.imshow(this_img.transpose((1,2,0)))
-        title_str = titles_list[cnt]
+        title_str = f"{prediction_list[cnt]}/{ground_truth_list[cnt]}"
         ax.set_title(title_str,fontsize=8)
         if cnt == num_images_to_preview:
             break
@@ -48,26 +48,26 @@ def plot_image_grid(images_list, titles_list, num_rows, num_cols):
     plt.show()
 
 
-def show_incorrect_predictions(incorrect_predictions, grad_cam_map_list, class_names, num_rows = 5, num_cols = 5):
+def show_incorrect_predictions(incorrect_predictions, class_names, num_rows = 5, num_cols = 5):
     incorrect_predictions_numpy_list = []
-    titles_list = []
-    for this_pred in incorrect_predictions:
+    num_images_to_show = num_rows*num_cols
+    prediction_list = []
+    ground_truth_list = []
+    for this_pred in incorrect_predictions[:num_images_to_show]:
         orig_img = this_pred[0]
         inv_transforms = transforms.Compose([transforms.Normalize((0.,0.,0.,),
                                             (1./0.247,1./0.244,1./0.262)),
                                         transforms.Normalize((-0.491,-0.482,-0.447),
                                                              (1.0,1.0,1.0))])
-        target_label = this_pred[1]
-        predicted_label = this_pred[2]
+        ground_truth = class_names[str(this_pred[1])]
+        ground_truth_list.append(ground_truth)
+        prediction = class_names[str(this_pred[2])]
+        prediction_list.append(prediction)
         un_normalized_tensor_img = inv_transforms(orig_img.squeeze())
         un_normalized_numpy_img = np.asarray(un_normalized_tensor_img)
         incorrect_predictions_numpy_list.append(un_normalized_numpy_img.transpose((1,2,0)))
-        title_str = f"{class_names[str(target_label.item())]}/{class_names[str(predicted_label.item())]}"
-        titles_list.append(title_str)
     # show incorrect predictions
-    plot_image_grid(incorrect_predictions_numpy_list, titles_list, num_rows, num_cols)
-    # show grad cam maps of incorrect predictions
-    plot_image_grid(grad_cam_map_list, titles_list, num_rows, num_cols)
+    plot_image_grid(incorrect_predictions_numpy_list, prediction_list, ground_truth_list, num_rows, num_cols)
 
 
 def plot_statistics(train_losses, train_acc, test_losses, test_acc, target_test_acc = 99):
