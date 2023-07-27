@@ -104,7 +104,7 @@ def define_scheduler(params, optimizer):
             final_div_factor = scheduler_params['final_div_factor'], 
             anneal_strategy = scheduler_params['anneal_strategy'], 
             verbose=True)
-    elif scheduler.upper() == 'REDUCELRONPLATEAU':
+    elif scheduler_type.upper() == 'REDUCELRONPLATEAU':
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(
             optimizer, 
             mode=scheduler_params['mode'], 
