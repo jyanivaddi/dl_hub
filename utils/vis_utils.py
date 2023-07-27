@@ -39,7 +39,7 @@ def plot_image_grid(images_list, prediction_list, ground_truth_list, num_rows, n
     for cnt, this_img in enumerate(images_list):
         ax = fig.add_subplot(num_rows, num_cols, cnt+1,xticks=[],yticks=[])
         plt.subplot(num_rows,num_cols,cnt+1)
-        plt.imshow(this_img.transpose((1,2,0)))
+        plt.imshow(this_img)
         title_str = f"{prediction_list[cnt]}/{ground_truth_list[cnt]}"
         ax.set_title(title_str,fontsize=8)
         if cnt == num_images_to_preview:
