@@ -38,7 +38,7 @@ def get_incorrect_predictions(model, test_loader, device):
     return incorrect_predictions
 
 
-def generate_grad_cam_visualizations(model, target_layers, incorrect_predictions, class_names, num_images_to_compute=32, image_weight=0.2):
+def generate_grad_cam_visualizations(model, target_layers, incorrect_predictions, class_names, num_images_to_compute=25, image_weight=0.2):
     grad_cam_map_list = []
     prediction_list = []
     ground_truth_list = []
