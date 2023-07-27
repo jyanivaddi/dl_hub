@@ -42,10 +42,10 @@ def generate_grad_cam_visualizations(model, target_layers, incorrect_predictions
     grad_cam_map_list = []
     prediction_list = []
     ground_truth_list = []
-    for cnt in range(len(num_images_to_compute)):
+    for cnt in range(num_images_to_compute):
         input_tensor = torch.unsqueeze(incorrect_predictions[cnt][0],0)
-        ground_truth = class_names[str(incorrect_predictions[cnt][1])]
-        prediction = class_names[str(incorrect_predictions[cnt][2])]
+        ground_truth = class_names[str(incorrect_predictions[cnt][1].item())]
+        prediction = class_names[str(incorrect_predictions[cnt][2].item())]
         prediction_list.append(prediction)
         ground_truth_list.append(ground_truth)
         grad_cam_map = compute_grad_cam_map(model, target_layers, input_tensor, image_weight=image_weight)

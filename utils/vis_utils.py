@@ -59,9 +59,9 @@ def show_incorrect_predictions(incorrect_predictions, class_names, num_rows = 5,
                                             (1./0.247,1./0.244,1./0.262)),
                                         transforms.Normalize((-0.491,-0.482,-0.447),
                                                              (1.0,1.0,1.0))])
-        ground_truth = class_names[str(this_pred[1])]
+        ground_truth = class_names[str(this_pred[1].item())]
         ground_truth_list.append(ground_truth)
-        prediction = class_names[str(this_pred[2])]
+        prediction = class_names[str(this_pred[2].item())]
         prediction_list.append(prediction)
         un_normalized_tensor_img = inv_transforms(orig_img.squeeze())
         un_normalized_numpy_img = np.asarray(un_normalized_tensor_img)
