@@ -9,12 +9,7 @@ from torch_lr_finder import LRFinder
 from pytorch_grad_cam import GradCAM
 from pytorch_grad_cam.utils.image import show_cam_on_image
 import numpy as np
-from utils.utils import un_normalize_image
 
-def normalize_image(input_tensor):
-    un_norm_image = un_normalize_image(input_tensor.squeeze())
-    un_norm_image_np = np.asarray(un_norm_image).astype(np.uint8)
-    return un_norm_image_np.transpose((1,2,0))
 
 
 def compute_grad_cam_map(model, target_layers, input_tensor, targets, image_weight=0.2):
@@ -23,7 +18,7 @@ def compute_grad_cam_map(model, target_layers, input_tensor, targets, image_weig
     # You can also pass aug_smooth=True and eigen_smooth=True, to apply smoothing.
     grad_cam_output = cam(input_tensor=input_tensor, targets=targets, aug_smooth=True, eigen_smooth=True)
     grad_cam_output = grad_cam_output[0,:]
-    grad_cam_map = show_cam_on_image(normalize_image(input_tensor), grad_cam_output, use_rgb=True, image_weight = image_weight)
+    grad_cam_map = show_cam_on_image(convert_tensor_to_np_uint8_array(input_tensor), grad_cam_output, use_rgb=True, image_weight = image_weight)
     return grad_cam_map
 
 
@@ -64,6 +59,11 @@ def un_normalize_image(img):
     un_norm_transform = transforms.Compose([transforms.Normalize((0.,0.,0.,),(1./0.247,1./0.244,1./0.262)),
                                                  transforms.Normalize((-0.491,-0.482,-0.447),(1.0,1.0,1.0))])
     return un_norm_transform(img)
+
+def convert_tensor_to_np_uint8_array(input_tensor):
+    un_norm_image = un_normalize_image(input_tensor.squeeze())
+    un_norm_image_np = np.asarray(un_norm_image).astype(np.uint8)
+    return un_norm_image_np.transpose((1,2,0))
 
 
 def get_device():
