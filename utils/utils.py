@@ -68,7 +68,7 @@ def un_normalize_image(img):
 
 def convert_tensor_to_np_uint8_array(input_tensor):
     un_norm_image = un_normalize_image(input_tensor.squeeze())
-    un_norm_image_np = np.asarray(un_norm_image).astype(np.uint8)
+    un_norm_image_np = np.asarray(un_norm_image*255).astype(np.uint8)
     return un_norm_image_np.transpose((1,2,0))
 
 
