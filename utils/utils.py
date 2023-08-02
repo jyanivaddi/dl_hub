@@ -58,9 +58,9 @@ def generate_grad_cam_visualizations(model, target_layers, incorrect_predictions
 def find_best_lr(model, train_loader, optimizer, criterion, device):
     lr_finder = LRFinder(model, optimizer, criterion, device) 
     lr_finder.range_test(train_loader, end_lr=10, num_iter=200, step_mode='exp')
-    lr_finder.plot()
+    _, best_lr = lr_finder.plot()
     lr_finder.reset()
-    return lr_finder.history
+    return best_lr
 
 
 def un_normalize_image(img):
