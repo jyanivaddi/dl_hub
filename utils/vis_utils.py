@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from torchvision import transforms
 from prettytable import PrettyTable
-from utils.utils import un_normalize_image
+from utils import un_normalize_image
 
 def print_train_log(train_acc, test_acc, train_loss, test_loss):
     t = PrettyTable()
