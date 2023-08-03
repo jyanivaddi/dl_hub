@@ -119,6 +119,7 @@ def train_and_eval_pl_model(params, resnet_model, data_module):
 
     trainer.fit(resnet_model, datamodule=data_module)
     trainer.test(resnet_model, datamodule=data_module)
+    return trainer
 
 
 def build_data_module(params):
