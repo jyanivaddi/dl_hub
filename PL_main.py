@@ -11,10 +11,9 @@ from torch.utils.data import DataLoader
 import albumentations as A
 import albumentations.augmentations as AA
 from albumentations.pytorch import ToTensorV2
-from dl_hub.models.custom_resnet import CustomResnet, model_summary
-from dl_hub.dataloaders.pl_custom_cifar10_datamodule import CustomCifar10DataModule
-from dl_hub.models.pl_custom_resnet import LitResnet
-from dl_hub.utils.utils import find_best_lr
+from dataloaders.pl_custom_cifar10_datamodule import CustomCifar10DataModule
+from models.pl_custom_resnet import LitResnet
+from utils.helper_utils import find_best_lr
 from torch.optim.lr_scheduler import OneCycleLR
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.loggers import CSVLogger

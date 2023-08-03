@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import models.resnet 
 from torch.optim.lr_scheduler import OneCycleLR
 from tqdm import tqdm
-from utils.utils import get_device
+from utils.helper_utils import get_device
 from dataloaders.data_loader import load_dataset
 
 
