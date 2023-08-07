@@ -7,7 +7,7 @@ import numpy as np
 import os
 import pandas as pd
 import torch
-from .utils import xywhn2xyxy, xyxy2xywhn
+from YOLOv3.utils import xywhn2xyxy, xyxy2xywhn
 import random 
 
 from PIL import Image, ImageFile

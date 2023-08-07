@@ -2,13 +2,13 @@
 Main file for training Yolo model on Pascal VOC and COCO dataset
 """
 
-import config
+import YOLOv3.config
 import torch
 import torch.optim as optim
 
 from model import YOLOv3
 from tqdm import tqdm
-from .utils import (
+from YOLOv3.utils import (
     mean_average_precision,
     cells_to_bboxes,
     get_evaluation_bboxes,
