@@ -8,7 +8,7 @@ import torch.optim as optim
 
 from model import YOLOv3
 from tqdm import tqdm
-from YOLOv3.utils import (
+from utils import (
     mean_average_precision,
     cells_to_bboxes,
     get_evaluation_bboxes,
