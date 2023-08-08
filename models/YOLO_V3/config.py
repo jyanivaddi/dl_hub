@@ -10,7 +10,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # seed_everything()  # If you want deterministic behavior
 #NUM_WORKERS = 2
 NUM_WORKERS = 2 if torch.cuda.is_available() else 1 
-PIN_MEMORY = True if use_cuda else False
+PIN_MEMORY = True if torch.cuda.is_available() else False
 BATCH_SIZE = 32
 IMAGE_SIZE = 416
 NUM_CLASSES = 20
