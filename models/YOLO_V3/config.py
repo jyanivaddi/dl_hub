@@ -8,7 +8,9 @@ from albumentations.pytorch import ToTensorV2
 DATASET = '/content/gdrive/MyDrive/Datasets/PASCAL_VOC_SMALL'
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # seed_everything()  # If you want deterministic behavior
-NUM_WORKERS = 1
+#NUM_WORKERS = 2
+NUM_WORKERS = 2 if torch.cuda.is_available() else 1 
+PIN_MEMORY = True if use_cuda else False
 BATCH_SIZE = 32
 IMAGE_SIZE = 416
 NUM_CLASSES = 20
@@ -19,7 +21,7 @@ CONF_THRESHOLD = 0.05
 MAP_IOU_THRESH = 0.5
 NMS_IOU_THRESH = 0.45
 S = [IMAGE_SIZE // 32, IMAGE_SIZE // 16, IMAGE_SIZE // 8]
-PIN_MEMORY = True
+#PIN_MEMORY = True
 LOAD_MODEL = False
 SAVE_MODEL = True
 CHECKPOINT_FILE = "checkpoint.pth.tar"
