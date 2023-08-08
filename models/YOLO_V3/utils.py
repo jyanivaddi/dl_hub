@@ -1,4 +1,4 @@
-import .config as config
+from . import config #.config as config
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
