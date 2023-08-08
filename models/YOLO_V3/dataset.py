@@ -2,7 +2,7 @@
 Creates a Pytorch dataset to load the Pascal VOC & MS COCO datasets
 """
 
-import config
+#import config
 import numpy as np
 import os
 import pandas as pd
@@ -177,5 +177,5 @@ def test():
         plot_image(x[0].permute(1, 2, 0).to("cpu"), boxes)
 
 
-if __name__ == "__main__":
-    test()
+#if __name__ == "__main__":
+#    test()
