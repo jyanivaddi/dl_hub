@@ -5,7 +5,10 @@ import torch
 from albumentations.pytorch import ToTensorV2
 #from .utils import seed_everything
 
-DATASET = '/content/gdrive/MyDrive/Datasets/PASCAL_VOC_SMALL'
+# For Gdrive
+#DATASET = '/content/gdrive/MyDrive/Datasets/PASCAL_VOC_SMALL'
+# For Kaggle
+DATASET = '/kaggle/input/pascal-voc-dataset-used-in-yolov3-video/PASCAL_VOC'
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # seed_everything()  # If you want deterministic behavior
 #NUM_WORKERS = 2
