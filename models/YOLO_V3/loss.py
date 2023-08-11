@@ -11,8 +11,8 @@ from .utils import intersection_over_union
 
 
 class YoloLoss(nn.Module):
-    def __init__(self):
-        super().__init__(scaled_anchors=None)
+    def __init__(self,scaled_anchors=None):
+        super().__init__()
         self.scaled_anchors = scaled_anchors
         self.mse = nn.MSELoss()
         self.bce = nn.BCEWithLogitsLoss()
