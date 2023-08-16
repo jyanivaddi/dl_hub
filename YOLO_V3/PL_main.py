@@ -42,7 +42,7 @@ class PeriodicCheckpoint(ModelCheckpoint):
   
     
             
-def train_pl_model(model, datamodule, ckpt_path=None, epochs = 2):
+def train_yolov3_model(model, datamodule, ckpt_path=None, epochs = 2):
     trainer = Trainer(
         enable_checkpointing=True,
         max_epochs=epochs,
