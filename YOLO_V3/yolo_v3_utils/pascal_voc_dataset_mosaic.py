@@ -20,7 +20,7 @@ from .utils import (
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-class YOLODataset(Dataset):
+class YOLODatasetMosaicAugmentation(Dataset):
     def __init__(
         self,
         csv_file,
