@@ -4,7 +4,7 @@ from pytorch_lightning.loggers import CSVLogger
 from pytorch_lightning.callbacks.progress import TQDMProgressBar
 from pathlib import Path
 import pytorch_lightning as pl
-from yolo_v3_utils.utils import check_class_accuracy, mean_average_precision
+from .yolo_v3_utils.utils import check_class_accuracy, mean_average_precision
 
 
 def calc_MAP(model, test_loader, config, scaled_anchors):
