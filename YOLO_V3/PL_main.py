@@ -5,6 +5,29 @@ from pytorch_lightning.callbacks.progress import TQDMProgressBar
 from pathlib import Path
 import pytorch_lightning as pl
 from .yolo_v3_utils.utils import check_class_accuracy, mean_average_precision
+from torch_lr_finder import LRFinder
+
+
+def criterion(out, y):
+    y0, y1, y2 = (
+            y[0].to(config.DEVICE),
+            y[1].to(config.DEVICE),
+            y[2].to(config.DEVICE),
+        )
+    loss = (
+                loss_fn(out[0], y0, scaled_anchors[0])
+                + loss_fn(out[1], y1, scaled_anchors[1])
+                + loss_fn(out[2], y2, scaled_anchors[2])
+            )
+    return loss
+
+
+def get_best_lr(train_data_loader, model, optimizer, criterion, device):
+    lr_finder = LRFinder(model, optimizer, criterion, device=device)
+    lr_finder.range_test(train_data_loader, end_lr=10, num_iter=200, step_mode="exp")
+    _, best_lr = lr_finder.plot() # to inspect the loss-learning rate graph
+    lr_finder.reset() # to reset the model and optimizer to their initial stat
+    return best_lr
 
 
 def calc_MAP(model, test_loader, config, scaled_anchors):
