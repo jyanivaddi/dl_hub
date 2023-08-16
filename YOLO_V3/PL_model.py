@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 from pytorch_lightning import LightningModule
 from torchmetrics.functional import accuracy
-from model import YOLOv3
+from .model import YOLOv3
 
 
 class LitYOLOv3(LightningModule):
