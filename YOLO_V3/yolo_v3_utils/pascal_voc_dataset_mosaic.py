@@ -31,12 +31,14 @@ class YOLODataset(Dataset):
         S=[13, 26, 52],
         C=20,
         transform=None,
+        mosaic_probability = 0.5,
     ):
         self.annotations = pd.read_csv(csv_file)
         self.img_dir = img_dir
         self.label_dir = label_dir
         self.image_size = image_size
         self.mosaic_border = [image_size // 2, image_size // 2]
+        self.mosaic_probability = mosaic_probability
         self.transform = transform
         self.S = S
         self.anchors = torch.tensor(anchors[0] + anchors[1] + anchors[2])  # for all 3 scales
@@ -49,6 +51,14 @@ class YOLODataset(Dataset):
         return len(self.annotations)
     
     def load_mosaic(self, index):
+        # perform mosaic only a certain percentage of times
+        if np.random.random() > self.mosaic_probability:
+            label_path = os.path.join(self.label_dir, self.annotations.iloc[index, 1])
+            bboxes = np.roll(np.loadtxt(fname=label_path, delimiter=" ", ndmin=2), 4, axis=1).tolist()
+            img_path = os.path.join(self.img_dir, self.annotations.iloc[index, 0])
+            image = np.array(Image.open(img_path).convert("RGB"))
+            return image, bboxes   
+
         # YOLOv5 4-mosaic loader. Loads 1 image + 3 random images into a 4-image mosaic
         labels4 = []
         s = self.image_size
