@@ -330,7 +330,7 @@ def get_evaluation_bboxes(
 
             train_idx += 1
 
-    model.train()
+    #model.train()
     return all_pred_boxes, all_true_boxes
 
 

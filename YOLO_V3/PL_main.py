@@ -5,7 +5,7 @@ from pytorch_lightning.loggers import CSVLogger
 from pytorch_lightning.callbacks.progress import TQDMProgressBar
 from pathlib import Path
 import pytorch_lightning as pl
-from .yolo_v3_utils.utils import check_class_accuracy, mean_average_precision, plot_couple_examples
+from .yolo_v3_utils.utils import check_class_accuracy, mean_average_precision, plot_couple_examples, get_evaluation_bboxes
 
 
 def calc_MAP(model, test_loader, config, scaled_anchors):
@@ -39,9 +39,9 @@ class PeriodicCheckpoint(ModelCheckpoint):
         if self.every >=1 and (trainer.current_epoch +1) % self.every == 0:
             assert self.dirpath is not None
             current = Path(self.dirpath) / f"checkpoint_epoch_{trainer.current_epoch}_step_{pl_module.global_step}.ckpt"
-            trainer.save_checkpoint(current)
-  
-    
+            trainer.save_checkpoint(current) 
+            
+               
             
 def train_yolov3_model(model, datamodule, ckpt_path=None, epochs = 2):
     trainer = Trainer(
