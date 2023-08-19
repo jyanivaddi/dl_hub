@@ -16,7 +16,7 @@ DATASET = '/content/gdrive/MyDrive/Datasets/PASCAL_VOC_SMALL'
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 #DEVICE = "cpu"
-seed_everything()  # If you want deterministic behavior
+#seed_everything()  # If you want deterministic behavior
 
 #NUM_WORKERS = 2
 NUM_WORKERS = 2 if torch.cuda.is_available() else 1 
