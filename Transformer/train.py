@@ -1,6 +1,6 @@
-from model import build_transformer
-from dataset import BilingualDataset, cusal_mask
-from config import get_config, get_weights_file_path
+from .model import build_transformer
+from .dataset import BilingualDataset, cusal_mask
+from .config import get_config, get_weights_file_path
 
 import torchtext.datasets as datasets
 import torch
@@ -256,7 +256,7 @@ def train_model(config):
         }, model_filename)
 
 
-if __name__ == "__main__":
-    warnings.filterwarnings('ignore')
-    config = get_config()
-    train_model(config)
+#if __name__ == "__main__":
+#    warnings.filterwarnings('ignore')
+#    config = get_config()
+#    train_model(config)
