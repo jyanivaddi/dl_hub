@@ -68,31 +68,12 @@ class OpusDataModule(LightningDataModule):
     def prepare_data(self) -> None:
         self.get_dataset()
 
-    def _split_dataset(self, dataset: Dataset, train: bool = True) -> Dataset:
-        """Splits the dataset into train and validation set."""
-        len_dataset = len(dataset)
-        splits = self._get_splits(len_dataset)
-        dataset_train, dataset_val = random_split(dataset, splits, generator=torch.Generator().manual_seed(42))
-        if train:
-            return dataset_train
-        return dataset_val
-
-    def _get_splits(self, len_dataset: int) -> List[int]:
-        """Computes split lengths for train and validation set."""
-        if isinstance(self.val_split, int):
-            train_len = len_dataset - self.val_split
-            splits = [train_len, self.val_split]
-        elif isinstance(self.val_split, float):
-            val_len = int(self.val_split * len_dataset)
-            train_len = len_dataset - val_len
-            splits = [train_len, val_len]
-        else:
-            raise ValueError(f"Unsupported type {type(self.val_split)}")
-        return splits
-
     def setup(self, stage=None):
-        train_ds_raw = self._split_dataset(self.ds_raw)
-        val_ds_raw = self._split_dataset(self.ds_raw, train=False)
+        # keep 90% for training, 10% for validation
+        train_proportion = max(1. - self.val_split, 0.9)
+        train_ds_size = int( train_proportion * len(self.ds_raw))
+        val_ds_size = len(self.ds_raw) - train_ds_size
+        train_ds_raw, val_ds_raw = random_split(self.ds_raw, [train_ds_size, val_ds_size])
 
         # Assign train/val datasets
         if stage == 'fit' or stage is None:
