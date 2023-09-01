@@ -2,7 +2,7 @@ import torch
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import CSVLogger
-from pytorch_lightning.callbacks.progress import TQDMProgressBar
+from pytorch_lightning.callbacks.progress import TQDMProgressBar, RichProgressBar
 from pathlib import Path
 from .config import get_weights_file_path
 import pytorch_lightning as pl
@@ -32,8 +32,9 @@ def train_transformer(model, datamodule, config, ckpt_path=None, epochs=2):
         accelerator="auto",
         devices=1 if torch.cuda.is_available() else None,
         logger=CSVLogger(save_dir="logs/"),
-        callbacks=[LearningRateMonitor(logging_interval="step"), 
-                   TQDMProgressBar(refresh_rate=10), 
+        callbacks=[LearningRateMonitor(logging_interval="step"),
+                   #TQDMProgressBar(refresh_rate=10),
+                   RichProgressBar(refresh_rate=10, leave=True),
                    PeriodicCheckpoint(config, verbose=True)],
         num_sanity_val_steps=0,
         precision=32
