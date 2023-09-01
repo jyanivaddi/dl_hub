@@ -1,6 +1,6 @@
 import torch
 from pytorch_lightning import LightningModule
-from model import build_transformer
+from .model import build_transformer
 
 
 class LitTransformer(LightningModule):

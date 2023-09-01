@@ -4,7 +4,7 @@ from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import CSVLogger
 from pytorch_lightning.callbacks.progress import TQDMProgressBar
 from pathlib import Path
-from config import get_weights_file_path
+from .config import get_weights_file_path
 import pytorch_lightning as pl
 
 
