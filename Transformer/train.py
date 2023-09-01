@@ -1,6 +1,6 @@
-from .model import build_transformer
-from .dataset import BilingualDataset, causal_mask
-from .config import get_config, get_weights_file_path
+from model import build_transformer
+from dataset import BilingualDataset, causal_mask
+from config import get_config, get_weights_file_path
 
 import torchtext.datasets as datasets
 import torch
@@ -11,10 +11,10 @@ from torch.optim.lr_scheduler import LambdaLR
 import warnings
 from tqdm import tqdm
 import os
-from pathlibt import Path
+from pathlib import Path
 
 # Huggingface datasets and tokenizers
-from datasets import load_dataset
+from datasets import load_dataset, load_from_disk
 from tokenizers import Tokenizer
 from tokenizers.models import WordLevel
 from tokenizers.trainers import WordLevelTrainer
@@ -41,25 +41,27 @@ def greedy_decode(model, source, source_mask, tokenizer_src, tokenizer_tgt, max_
 
         # calculate output
         out = model.decode(encoder_output, source_mask, decoder_input, decoder_mask)
+        #out = out.squeeze(1)
 
         # get next token
         prob = model.project(out[:,-1])
+        #prob = model.project(out[-1,:])
         _, next_word = torch.max(prob, dim=1)
         decoder_input = torch.cat(
-            [decoder_input, torch.empty(1,1).type_as(source).fill_(next_word.item()).to(device)],dim=0
+            [decoder_input, torch.empty(1,1).type_as(source).fill_(next_word.item()).to(device)],dim=1
         )
 
         if next_word == eos_idx:
             break
 
-    return  decoder_input.squeeze(0)
+    return decoder_input.squeeze(0)
 
-def run_validation(model, validation_ds, tokenizer_src, tokenizer_tgt, max_len, device, print_msg, globa):
+def run_validation(model, validation_ds, tokenizer_src, tokenizer_tgt, max_len, device, print_msg, global_step, writer, num_examples=2):
     model.eval()
     count = 0
 
     source_texts = []
-    exptected = []
+    expected = []
     predicted = []
 
     try:
@@ -93,9 +95,9 @@ def run_validation(model, validation_ds, tokenizer_src, tokenizer_tgt, max_len, 
 
             # print the source, target, and the model output
             print_msg('-'*console_width)
-            print_msg(f"{f'Source: ' :>12}{source_text}")
-            print_msg(f"{f'Target: ' :>12}{target_text}")
-            print_msg(f"{f'Predicted: ' :>12}{model_out_text}")
+            print_msg(f"{f'SOURCE: ' :>12}{source_text}")
+            print_msg(f"{f'TARGET: ' :>12}{target_text}")
+            print_msg(f"{f'PREDICTED: ' :>12}{model_out_text}")
 
             if count == num_examples:
                 print_msg('-'*console_width)
@@ -112,13 +114,13 @@ def run_validation(model, validation_ds, tokenizer_src, tokenizer_tgt, max_len, 
         # compute word error rate
         metric = torchmetrics.WordErrorRate()
         wer = metric(predicted, expected)
-        writer.add_scalar('validatiomn wer', wer, global_step)
+        writer.add_scalar('validation wer', wer, global_step)
         writer.flush()
 
         # compute the BLEU metric
-        metric = torchmetrics.BLUEScore()
+        metric = torchmetrics.BLEUScore()
         bleu = metric(predicted, expected)
-        oriter.add_scalar('validation BLEU', bleu, global_step)
+        writer.add_scalar('validation BLEU', bleu, global_step)
         writer.flush()
 
 def get_all_sentences(ds, lang):
@@ -126,8 +128,8 @@ def get_all_sentences(ds, lang):
         yield item['translation'][lang]
 
 def get_or_build_tokenizer(config, ds, lang):
-    tokenizer_path = Path(config[tokenizer_file].format(lang))
-    if not Path.exists(tokenizr_path):
+    tokenizer_path = Path(config['tokenizer_file'].format(lang))
+    if not Path.exists(tokenizer_path):
         # code inspired from huggingface tokenizers
         tokenizer = Tokenizer(WordLevel(unk_token="[UNK]"))
         tokenizer.pre_tokenizer = Whitespace()
@@ -140,14 +142,19 @@ def get_or_build_tokenizer(config, ds, lang):
 
 def get_ds(config):
     # It only has the train split, so we divide it ourselves
-    ds_raw = load_dataset('opus_books', f"{config['lang_src']}-{config['lang-tgt']}", split='train')
+    if config['ds_mode'] == "disk":
+        ds_raw = load_from_disk(config['ds_path'])
+    else:
+        ds_raw = load_dataset('opus_books', f"{config['lang_src']}-{config['lang_tgt']}", split='train')
+    if config['save_ds_to_disk']:
+        ds_raw.save_to_disk("./OpusBooks")
 
     # Build tokenizers
     tokenizer_src = get_or_build_tokenizer(config, ds_raw, config['lang_src'])
-    tokenizer_ = get_or_build_tokenizer(config, ds_raw, config['lang_src'])
+    tokenizer_tgt = get_or_build_tokenizer(config, ds_raw, config['lang_tgt'])
 
     # keep 90% for training, 10% for validation
-    train_ds_size = int(0.9, * len(ds_raw))
+    train_ds_size = int(0.9 * len(ds_raw))
     val_ds_size = len(ds_raw) - train_ds_size
     train_ds_raw, val_ds_raw = random_split(ds_raw, [train_ds_size, val_ds_size])
 
@@ -162,7 +169,7 @@ def get_ds(config):
         src_ids = tokenizer_src.encode(item['translation'][config['lang_src']]).ids
         tgt_ids = tokenizer_src.encode(item['translation'][config['lang_tgt']]).ids
         max_len_src = max(max_len_src, len(src_ids))
-        max_len_tgt = max(max_len_src, len(tgt_ids))
+        max_len_tgt = max(max_len_tgt, len(tgt_ids))
 
     print(f'Max length of source sentence: {max_len_src}')
     print(f'Max length of target sentence: {max_len_tgt}')
@@ -212,6 +219,8 @@ def train_model(config):
         model.train()
         batch_iterator = tqdm(train_dataloader, desc=f"processing epoch {epoch:02d}")
         for batch in batch_iterator:
+            #if global_step > 2:
+            #    break
 
             encoder_input = batch['encoder_input'].to(device) # (B, seq_len)
             decoder_input = batch['decoder_input'].to(device) # (B, seq_len)
@@ -239,7 +248,7 @@ def train_model(config):
 
             # Update weights
             optimizer.step()
-            optimizer.zero_Grad(set_to_none=True)
+            optimizer.zero_grad(set_to_none=True)
 
             global_step += 1
 
@@ -251,7 +260,7 @@ def train_model(config):
         torch.save({
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
-            'optimizer_state_dict': model.optimizer.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
             'global_step': global_step 
         }, model_filename)
 

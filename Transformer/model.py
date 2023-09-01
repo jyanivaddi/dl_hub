@@ -1,11 +1,6 @@
-import math
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from pytorch_lightning import LightningModule
-from torchmetrics.functional import accuracy
-
-
+import math
 
 class LayerNormalization(nn.Module):
 
@@ -17,43 +12,29 @@ class LayerNormalization(nn.Module):
 
     def forward(self,x):
         # x: (batch_size, seq_len, hidden_size)
+        # Keep the dimension for broadcasting
         mean = x.mean(dim=-1, keepdim=True) # (batch, seq_len, 1)
+        # Keep the dimension for broadcasting
         std = x.std(dim=-1, keepdim=True) # (batch, seq_len, 1)
+        # eps is to prevent dividing by zero or when std is very small
         return self.alpha*(x-mean)/(std+self.eps) + self.bias
-
 
 class FeedForwardBlock(nn.Module):
 
     def __init__(self, d_model: int, d_ff: int, dropout: float) -> None:
-        """
-        d_model: dimension of embedding (512)
-        d_ff: expanded dim (1024)
-        dropout: dropout percentage
-        """
         super().__init__()
         self.linear_1 =  nn.Linear(d_model, d_ff) # w1 and b1
         self.dropout = nn.Dropout(dropout)
         self.linear_2 = nn.Linear(d_ff, d_model) # w2 and b2
     
     def forward(self, x):
-        # batch: batch size
-        # seq_len: length of the sequence
-        # d_model: embedding dimension
         # (batch, seq_len, d_model) -> (batch, seq_len, d_ff) -> (batch, seq_len, d_model)
-        x = self.linear_1(x)  # (batch, seq_len, d_ff)
-        x = torch.relu(x) # (batch, seq_len, d_ff)
-        x = self.dropout(x) # (batch, seq_len, d_ff)
-        x = self.linear_x(x) # (batch, seq_len, d_model)
-        return x
-    
+        return self.linear_2(self.dropout(torch.relu(self.linear_1(x))))
 
 class InputEmbeddings(nn.Module):
 
     def __init__(self, d_model: int, vocab_size: int) -> None:
-        """
-        vocab_size: total no of words in the input
-        d_model: embedding dim (512).
-        """
+        super().__init__()
         self.d_model = d_model
         self.vocab_size = vocab_size
         self.embedding = nn.Embedding(vocab_size, d_model)
@@ -63,14 +44,13 @@ class InputEmbeddings(nn.Module):
         # multiply by sqrt(d_model) to scale the embeddings per the paper
         return self.embedding(x)*math.sqrt(self.d_model) 
 
-
 class PositionalEncoding(nn.Module):
 
     def __init__(self, d_model: int, seq_len: int, dropout: float) -> None:
         super().__init__()
         self.d_model = d_model
         self.seq_len = seq_len
-        self.dropout = dropout
+        self.dropout = nn.Dropout(dropout)
         # create a matrix of shape (seq_len, d_model)
         pe = torch.zeros(seq_len, d_model)
         # create a vector of shape (seq_len)
@@ -81,7 +61,6 @@ class PositionalEncoding(nn.Module):
         # => 10000**(-2*i/d_model) 
         # => 1/(10000**(2*i/d_model))
         div_term = torch.exp(torch.arange(0,d_model, 2).float() * (-math.log(10000.)/d_model)) 
-
         # Apply sin to even indices
         pe[:,0::2] = torch.sin(position*div_term)
         # Apply cos to odd indices
@@ -93,7 +72,7 @@ class PositionalEncoding(nn.Module):
 
 
     def forward(self, x):
-        x = x + self.pe[:,:x.shape[1],:].requires_grad(False) # (batch, seq_len, d_model)
+        x = x + (self.pe[:,:x.shape[1],:]).requires_grad_(False) # (batch, seq_len, d_model)
         return self.dropout(x)
 
 
@@ -126,13 +105,13 @@ class MultiHeadAttentionBlock(nn.Module):
 
     @staticmethod
     def attention(query, key, value, mask, dropout: nn.Dropout):
-        d_k = query.shape[1]
+        d_k = query.shape[-1]
         # Just apply the formula from the paper
         # (batch, h, seq_len, d_k) -> (batch, h, seq_len, seq_len)
         attention_scores = (query @ key.transpose(-2,-1)) / math.sqrt(d_k)
         if mask is not None:
             # Write a very low value (indicating -inf) to the positions where mask == 0
-            attention_scores.masked_fill(mask == 0, -1e9)
+            attention_scores.masked_fill_(mask == 0, -1e9)
         attention_scores = attention_scores.softmax(dim=-1) # (batch, h, seq_len, seq_len) # Apply softmax to the attention outputs
         if dropout is not None:
             attention_scores = dropout(attention_scores)
@@ -230,7 +209,7 @@ class ProjectionLayer(nn.Module):
 
 class Transformer(nn.Module):
 
-    def __init(self, encoder: Encoder, decoder: Decoder, src_embed: InputEmbeddings, tgt_embed: InputEmbeddings, src_pos: PositionalEncoding, tgt_pos: PositionalEncoding, projection_layer: ProjectionLayer):
+    def __init__(self, encoder: Encoder, decoder: Decoder, src_embed: InputEmbeddings, tgt_embed: InputEmbeddings, src_pos: PositionalEncoding, tgt_pos: PositionalEncoding, projection_layer: ProjectionLayer):
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder
