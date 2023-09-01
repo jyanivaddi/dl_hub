@@ -128,9 +128,11 @@ class LitTransformer(LightningModule):
 
         if stage:
             # print the source, target, and the model output
+            print("\n*****************************************")
             print(f"{f'SOURCE: ' :>12}{source_text}")
             print(f"{f'TARGET: ' :>12}{target_text}")
             print(f"{f'PREDICTED: ' :>12}{model_out_text}")
+            print("*****************************************\n")
 
 
     def validation_step(self, batch, batch_idx):
