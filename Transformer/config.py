@@ -14,8 +14,9 @@ def get_config():
         "preload": True,
         "tokenizer_file": "tokenizer_{0}.json",
         "experiment_name": "runs/tmodel",
-        "ds_mode": "disk",
-        "ds_path": "/home/e183534/OpusBooks",
+        "ds_mode": "Online",
+        #"ds_path": "/home/e183534/OpusBooks",
+        "ds_path": None,
         "save_ds_to_disk": False,
     }
 
