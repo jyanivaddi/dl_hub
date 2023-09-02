@@ -1,8 +1,6 @@
 import torch
 from pytorch_lightning import LightningModule
 from .model import build_transformer
-import torchmetrics.Accuracy
-
 
 class LitTransformer(LightningModule):
     """
