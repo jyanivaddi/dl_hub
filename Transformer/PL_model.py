@@ -70,7 +70,7 @@ class LitTransformer(LightningModule):
         proj_output = self(batch)
         loss = self.loss_criterion(proj_output.view(-1, self._vocab_tgt_len),
                                    label.view(-1))
-        self.log("train loss", loss.item(), prog_bar=True)
+        self.log("train_loss", loss.item(), prog_bar=True)
         self.this_step_train_loss = loss.item()
         #self.train_loss(proj_output.view(-1, self._vocab_tgt_len), label.view(-1))
         return loss
