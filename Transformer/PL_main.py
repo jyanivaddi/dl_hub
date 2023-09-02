@@ -26,7 +26,7 @@ class PeriodicCheckpoint(ModelCheckpoint):
         }, model_filename)
 
 class PrintAccuracyAndLoss(Callback):
-    def on_epoch_end(self, trainer, pl_module):
+    def on_train_epoch_end(self, trainer, pl_module):
         train_loss = trainer.callback_metrics['train_loss']
         print(f"Epoch {trainer.current_epoch}: train_loss={train_loss:.4f}")
 
