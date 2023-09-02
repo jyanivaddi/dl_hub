@@ -1,6 +1,7 @@
 import torch
 from pytorch_lightning import LightningModule
 from .model import build_transformer
+import torchmetrics.Accuracy
 
 
 class LitTransformer(LightningModule):
@@ -29,6 +30,7 @@ class LitTransformer(LightningModule):
         self.scheduler = None
         self.scheduler_dict = {}
         self.optimizer = None
+        self.this_step_train_loss = None
         self.save_hyperparameters()
 
     def _define_transformer_model(self):
@@ -71,6 +73,8 @@ class LitTransformer(LightningModule):
         loss = self.loss_criterion(proj_output.view(-1, self._vocab_tgt_len),
                                    label.view(-1))
         self.log("train loss", loss.item(), prog_bar=True)
+        self.this_step_train_loss = loss.item()
+        #self.train_loss(proj_output.view(-1, self._vocab_tgt_len), label.view(-1))
         return loss
 
     @staticmethod

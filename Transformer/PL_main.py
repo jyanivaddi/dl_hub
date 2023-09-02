@@ -3,6 +3,7 @@ from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import CSVLogger
 from pytorch_lightning.callbacks.progress import TQDMProgressBar, RichProgressBar
+from pytorch_lightning.callbacks import Callback
 from pathlib import Path
 from .config import get_weights_file_path
 import pytorch_lightning as pl
@@ -23,6 +24,11 @@ class PeriodicCheckpoint(ModelCheckpoint):
             'optimizer_state_dict': trainer.model.optimizer.state_dict(),
             'global_step': trainer.global_step
         }, model_filename)
+
+class PrintAccuracyAndLoss(Callback):
+    def on_epoch_end(self, trainer, pl_module):
+        train_loss = trainer.callback_metrics['train_loss']
+        print(f"Epoch {trainer.current_epoch}: train_loss={train_loss:.4f}")
 
 
 def train_transformer(model, datamodule, config, ckpt_path=None, epochs=2):
