@@ -41,7 +41,8 @@ def train_transformer(model, datamodule, config, ckpt_path=None, epochs=2):
         callbacks=[LearningRateMonitor(logging_interval="step"),
                    TQDMProgressBar(refresh_rate=10),
                    #RichProgressBar(refresh_rate=10, leave=True),
-                   PeriodicCheckpoint(config, verbose=True)],
+                   PeriodicCheckpoint(config, verbose=True),
+                   PrintAccuracyAndLoss()],
         num_sanity_val_steps=0,
         precision=32
     )
