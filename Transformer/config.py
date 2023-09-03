@@ -7,8 +7,8 @@ def get_config():
         "lr": 10**-4,
         "seq_len": 350,
         "d_model": 512,
-        "lang_src": 'en',
-        "lang_tgt": 'it',
+        "lang_src": "en",
+        "lang_tgt": "fr",
         "model_folder": "weights",
         "model_basename": "tmodel_",
         "preload": True,
@@ -17,7 +17,8 @@ def get_config():
         "ds_mode": "Online",
         #"ds_path": "/home/e183534/OpusBooks",
         "ds_path": None,
-        "save_ds_to_disk": False,
+        "ds_name": "opus_books",
+        "save_ds_to_disk": True
     }
 
 def get_weights_file_path(config, epoch:str):
