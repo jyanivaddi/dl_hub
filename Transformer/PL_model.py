@@ -147,7 +147,8 @@ class LitTransformer(LightningModule):
             self.evaluate(batch, "test")
 
     def configure_optimizers(self):
-        #return {"optimizer": self.optimizer, "lr_scheduler": self.scheduler_dict}
+        if self.scheduler_dict:
+            return {"optimizer": self.optimizer, "lr_scheduler": self.scheduler_dict}
         return {"optimizer": self.optimizer}
 
 
