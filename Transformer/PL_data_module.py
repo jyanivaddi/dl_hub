@@ -59,7 +59,7 @@ class OpusDataModule(LightningDataModule):
                                   f"{self.config['lang_src']}-{self.config['lang_tgt']}",
                                   split='train')
         if self.config['save_ds_to_disk']:
-            self.ds_raw.save_to_disk(f"./{self.config['ds_name']}_{self.config['lang_src']}_{self.config['lan_tgt']}")
+            self.ds_raw.save_to_disk(f"./{self.config['ds_name']}_{self.config['lang_src']}_{self.config['lang_tgt']}")
 
         # Build tokenizers
         self.tokenizer_src = self._get_or_build_tokenizer(self.ds_raw, self.config['lang_src'])
