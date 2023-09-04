@@ -68,6 +68,11 @@ class OpusDataModule(LightningDataModule):
     def prepare_data(self) -> None:
         self.get_dataset()
 
+
+    def prune_dataset(self, train_ds_raw):
+        print(train_ds_raw)
+        return
+
     def setup(self, stage=None):
         # keep 90% for training, 10% for validation
         train_proportion = max(1. - self.val_split, 0.9)
