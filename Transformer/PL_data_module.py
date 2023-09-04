@@ -70,8 +70,15 @@ class OpusDataModule(LightningDataModule):
 
 
     def prune_dataset(self, train_ds_raw):
+        """
+        Trim the dataset so that the longest sentence is more then 120
+        """
+        sorted_train_ds = sorted(train_ds_raw, key=lambda x: (len(x["translation"][self.config["lang_src"]])))
         print(train_ds_raw)
-        return
+        filtered_sorted_train_ds = [k for k in sorted_train_ds if len(k["translation"]["lang_src"]) < 120]
+        filtered_sorted_train_ds = [k for k in sorted_train_ds if len(k["translation"]["lang_tgt"]) < 120]
+        filtered_sorted_train_ds = [k for k in sorted_train_ds if len(k["translation"]["lang_src"]) + 10 > len(k["translation"]["lang_tgt"])]
+        return filtered_sorted_train_ds
 
     def setup(self, stage=None):
         # keep 90% for training, 10% for validation
@@ -79,12 +86,13 @@ class OpusDataModule(LightningDataModule):
         train_ds_size = int( train_proportion * len(self.ds_raw))
         val_ds_size = len(self.ds_raw) - train_ds_size
         train_ds_raw, val_ds_raw = random_split(self.ds_raw, [train_ds_size, val_ds_size])
+        train_ds_filtered = self.prune_dataset(train_ds_raw)
 
         # Assign train/val datasets
         if stage == 'fit' or stage is None:
             # Split
 
-            self.train_dataset = BilingualDataset(train_ds_raw,
+            self.train_dataset = BilingualDataset(train_ds_filtered,
                                                   self.tokenizer_src,
                                                   self.tokenizer_tgt,
                                                   self.config['lang_src'],
