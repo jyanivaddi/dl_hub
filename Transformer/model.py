@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import math
+from torch.cuda.amp import autocast as autocast
 
 class LayerNormalization(nn.Module):
 
@@ -109,9 +110,11 @@ class MultiHeadAttentionBlock(nn.Module):
         # Just apply the formula from the paper
         # (batch, h, seq_len, d_k) -> (batch, h, seq_len, seq_len)
         attention_scores = (query @ key.transpose(-2,-1)) / math.sqrt(d_k)
+        _MASKING_VALUE = -1e9 if attention_scores.dtype == torch.float32 else -1e4
         if mask is not None:
-            # Write a very low value (indicating -inf) to the positions where mask == 0
-            attention_scores.masked_fill_(mask == 0, -1e9)
+            with autocast():
+                # Write a very low value (indicating -inf) to the positions where mask == 0
+                attention_scores.masked_fill_(mask == 0, _MASKING_VALUE)
         attention_scores = attention_scores.softmax(dim=-1) # (batch, h, seq_len, seq_len) # Apply softmax to the attention outputs
         if dropout is not None:
             attention_scores = dropout(attention_scores)
@@ -236,7 +239,7 @@ class Transformer(nn.Module):
         return self.projection_layer(x)
 
 
-def build_transformer(src_vocab_size: int, tgt_vocab_size: int, src_seq_len: int, tgt_seq_len: int, d_model: int=512, N: int=6, h: int=8, dropout: float=0.1, d_ff: int=2048) -> Transformer:
+def build_transformer(src_vocab_size: int, tgt_vocab_size: int, src_seq_len: int, tgt_seq_len: int, d_model: int=512, N: int=6, h: int=8, dropout: float=0.1, d_ff: int=2048, parameter_sharing: bool=True) -> Transformer:
     # control d_ff to control RAM 
     # create embedding layers
     src_embed = InputEmbeddings(d_model, src_vocab_size)
@@ -246,26 +249,42 @@ def build_transformer(src_vocab_size: int, tgt_vocab_size: int, src_seq_len: int
     src_pos = PositionalEncoding(d_model, src_seq_len, dropout)
     tgt_pos = PositionalEncoding(d_model, tgt_seq_len, dropout)
 
+    # Halve the blocks if using parameter sharing
+    num_blocks = N
+    if parameter_sharing:
+        num_blocks = N//2
+
     # create encoder blocks
     encoder_blocks = []
-    for _ in range(N):
+    for _ in range(num_blocks):
         encoder_self_attention_block = MultiHeadAttentionBlock(d_model, h, dropout)
         feed_forward_block = FeedForwardBlock(d_model, d_ff, dropout)
         encoder_block = EncoderBlock(encoder_self_attention_block, feed_forward_block, dropout)
         encoder_blocks.append(encoder_block)
-    
+
     # create the decoder blocks
     decoder_blocks = []
-    for _ in range(N):
+    for _ in range(num_blocks):
         decoder_self_attention_block = MultiHeadAttentionBlock(d_model, h, dropout)
         decoder_cross_attention_block = MultiHeadAttentionBlock(d_model, h, dropout)
         feed_forward_block = FeedForwardBlock(d_model, d_ff, dropout)
         decoder_block = DecoderBlock(decoder_self_attention_block, decoder_cross_attention_block, feed_forward_block, dropout)
         decoder_blocks.append(decoder_block)
 
-    # create encoder and decoder
-    encoder = Encoder(nn.ModuleList(encoder_blocks))
-    decoder = Decoder(nn.ModuleList(decoder_blocks))
+    if parameter_sharing:
+        # parameter sharing
+        e1, e2, e3 = encoder_blocks
+        d1, d2, d3 = decoder_blocks
+        encoder_blocks1 = [e1, e2, e3, e3, e2, e1]
+        decoder_blocks1 = [d1, d2, d3, d3, d2, d1]
+        # create encoder and decoder
+        encoder = Encoder(nn.ModuleList(encoder_blocks1))
+        decoder = Decoder(nn.ModuleList(decoder_blocks1))
+    else:
+        # create encoder and decoder
+        encoder = Encoder(nn.ModuleList(encoder_blocks))
+        decoder = Decoder(nn.ModuleList(decoder_blocks))
+
 
     # create projection layer
     projection_layer = ProjectionLayer(d_model, tgt_vocab_size)
@@ -278,6 +297,8 @@ def build_transformer(src_vocab_size: int, tgt_vocab_size: int, src_seq_len: int
         if p.dim() > 1:
             nn.init.xavier_uniform_(p)
 
+    num_params = sum(p.numel() for p in transformer.parameters())
+    print(f"Total Parameters: {num_params}")
     return transformer
 
 

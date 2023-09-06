@@ -2,8 +2,10 @@ from pathlib import Path
 
 def get_config():
     return {
-        "batch_size": 2048,
-        "num_epochs": 20,
+        "parameter_sharing": False,
+        "d_ff": 2048,
+        "batch_size": 32,
+        "num_epochs": 30,
         "lr": 10**-4,
         "seq_len": 160,
         "d_model": 512,
@@ -13,7 +15,8 @@ def get_config():
         "model_basename": "tmodel_",
         "preload": True,
         "tokenizer_file": "tokenizer_{0}.json",
-        "experiment_name": "runs/tmodel",
+        "rundir": "runs",
+        "experiment_name": "tmodel_dynamic_pad",
         "ds_mode": "Online",
         #"ds_path": "/home/e183534/OpusBooks",
         "ds_path": None,

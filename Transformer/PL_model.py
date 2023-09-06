@@ -1,6 +1,7 @@
 import torch
 from pytorch_lightning import LightningModule
-from .model import build_transformer
+#from .model import build_transformer
+from model import build_transformer
 
 class LitTransformer(LightningModule):
     """
@@ -29,14 +30,18 @@ class LitTransformer(LightningModule):
         self.scheduler_dict = {}
         self.optimizer = None
         self.this_step_train_loss = None
-        self.save_hyperparameters()
+        self.predicted_list = []
+        self.expected_list = []
+        self.save_hyperparameters(ignore=['loss_criterion', 'epoch'])
 
     def _define_transformer_model(self):
         model = build_transformer(self._vocab_src_len,
                                   self._vocab_tgt_len,
                                   self.config['seq_len'],
                                   self.config['seq_len'],
-                                  d_model=self.config['d_model'])
+                                  d_model=self.config['d_model'],
+                                  d_ff=self.config['d_ff'],
+                                  parameter_sharing=self.config['parameter_sharing'])
         return model
 
     def set_optimizer(self, optimizer):
@@ -48,6 +53,11 @@ class LitTransformer(LightningModule):
             "scheduler": self.scheduler,
             "interval": freq,
         }
+
+    def configure_optimizers(self):
+        if self.scheduler_dict:
+            return {"optimizer": self.optimizer, "lr_scheduler": self.scheduler_dict}
+        return {"optimizer": self.optimizer}
 
     def forward(self, x):
         # Run the tensors through the encoder, decoder, and projection layer
@@ -64,16 +74,6 @@ class LitTransformer(LightningModule):
         proj_output = self.model.project(decoder_output)  # (B, seq_len, vocab_size)
         return proj_output
 
-    def training_step(self, batch):
-        label = batch['label']  # (B, seq_len)
-        #proj_output = self(encoder_input, decoder_input, encoder_mask, decoder_mask)
-        proj_output = self(batch)
-        loss = self.loss_criterion(proj_output.view(-1, self._vocab_tgt_len),
-                                   label.view(-1))
-        self.log("train_loss", loss.item(), prog_bar=True)
-        self.this_step_train_loss = loss.item()
-        #self.train_loss(proj_output.view(-1, self._vocab_tgt_len), label.view(-1))
-        return loss
 
     @staticmethod
     def causal_mask(size):
@@ -128,6 +128,7 @@ class LitTransformer(LightningModule):
         target_text = batch['tgt_text'][0]
         model_out_text = self.tokenizer_tgt.decode(model_out.detach().cpu().numpy())
 
+
         if stage:
             # print the source, target, and the model output
             print("*****************************************")
@@ -135,20 +136,29 @@ class LitTransformer(LightningModule):
             print(f"{f'TARGET: ' :>12}{target_text}")
             print(f"{f'PREDICTED: ' :>12}{model_out_text}")
             print("*****************************************\n")
+        return model_out_text, target_text
 
+    def training_step(self, batch):
+        label = batch['label']  # (B, seq_len)
+        #proj_output = self(encoder_input, decoder_input, encoder_mask, decoder_mask)
+        proj_output = self(batch)
+        loss = self.loss_criterion(proj_output.view(-1, self._vocab_tgt_len),
+                                   label.view(-1))
+        self.log("train_loss", loss.item(), prog_bar=True)
+        self.this_step_train_loss = loss.item()
+        #self.train_loss(proj_output.view(-1, self._vocab_tgt_len), label.view(-1))
+        return loss
 
     def validation_step(self, batch, batch_idx):
         if batch_idx < self.num_validation_examples:
-            self.evaluate(batch, "val")
+            predicted, expected = self.evaluate(batch, "val")
+            self.predicted_list.append(predicted)
+            self.expected_list.append(expected)
 
 
     def test_step(self, batch, batch_idx):
         if batch_idx < self.num_validation_examples:
             self.evaluate(batch, "test")
 
-    def configure_optimizers(self):
-        if self.scheduler_dict:
-            return {"optimizer": self.optimizer, "lr_scheduler": self.scheduler_dict}
-        return {"optimizer": self.optimizer}
 
 
