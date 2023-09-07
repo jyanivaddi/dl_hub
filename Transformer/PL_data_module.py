@@ -9,8 +9,8 @@ from tokenizers.models import WordLevel
 from tokenizers.trainers import WordLevelTrainer
 from tokenizers.pre_tokenizers import Whitespace
 
-#from .dataset import BilingualDataset
-from dataset import BilingualDataset
+from .dataset import BilingualDataset
+#from dataset import BilingualDataset
 
 
 class OpusDataModule(LightningDataModule):

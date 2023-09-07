@@ -6,8 +6,8 @@ from pytorch_lightning.loggers.tensorboard import TensorBoardLogger
 from pytorch_lightning.callbacks.progress import TQDMProgressBar
 from pytorch_lightning.callbacks import Callback
 import torchmetrics
-#from .config import get_weights_file_path
-from config import get_weights_file_path
+from .config import get_weights_file_path
+#from config import get_weights_file_path
 import pytorch_lightning as pl
 
 
