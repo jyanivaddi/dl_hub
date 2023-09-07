@@ -20,12 +20,7 @@ class PeriodicCheckpoint(ModelCheckpoint):
     def on_train_epoch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule, *args, **kwargs):
         # save the model at the end of every epoch
         model_filename = get_weights_file_path(self.config, f"{trainer.current_epoch}")
-        torch.save({
-            'epoch': trainer.current_epoch,
-            'model_state_dict': trainer.model.state_dict(),
-            'optimizer_state_dict': trainer.model.optimizer.state_dict(),
-            'global_step': trainer.global_step
-        }, model_filename)
+        trainer.save_checkpoint(current)
 
 
 class PrintAccuracyAndLoss(Callback):
