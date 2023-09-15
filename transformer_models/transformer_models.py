@@ -477,30 +477,30 @@ class ViT(nn.Module):
                                               patch_size=patch_size,
                                               embedding_dim=embedding_dim)
 
-        # 9. Create Transformer Encoder blocks (we can stack Transformer Encoder blocks using nn.Sequential())
-        self.transformer_encoder = nn.Sequential(*[TransformerEncoderBlock(embedding_dim=embedding_dim,
-                                                                           num_heads=num_heads,
-                                                                           mlp_size=mlp_size,
-                                                                           mlp_dropout=mlp_dropout) for _ in
-                                                   range(num_transformer_layers)])
+        ## 9. Create Transformer Encoder blocks (we can stack Transformer Encoder blocks using nn.Sequential())
+        #self.transformer_encoder = nn.Sequential(*[TransformerEncoderBlock(embedding_dim=embedding_dim,
+        #                                                                   num_heads=num_heads,
+        #                                                                   mlp_size=mlp_size,
+        #                                                                   mlp_dropout=mlp_dropout) for _ in
+        #                                           range(num_transformer_layers)])
 
-        #blocks = []
-        #for _ in range(num_transformer_layers):
-        #    # Create MSA block (equation 2)
-        #    msa_block = MultiHeadAttentionBlock(d_model=embedding_dim,
-        #                                        h=num_heads,
-        #                                        dropout=attn_dropout)
-        #    # Create MLP block (equation 3)
-        #    mlp_block = MLPBlock(embedding_dim=embedding_dim,
-        #                         mlp_size=mlp_size,
-        #                         dropout=mlp_dropout)
-#
-#            this_encoder_block = EncoderBlock(self_attention_block=msa_block,
-#                                              feed_forward_block=mlp_block,
-#                                              dropout=mlp_dropout)
-#            blocks.append(this_encoder_block)
-#
-#        self.transformer_encoder = nn.Sequential(*blocks)
+        blocks = []
+        for _ in range(num_transformer_layers):
+            # Create MSA block (equation 2)
+            msa_block = MultiHeadAttentionBlock(d_model=embedding_dim,
+                                                h=num_heads,
+                                                dropout=attn_dropout)
+            # Create MLP block (equation 3)
+            mlp_block = MLPBlock(embedding_dim=embedding_dim,
+                                 mlp_size=mlp_size,
+                                 dropout=mlp_dropout)
+
+            this_encoder_block = EncoderBlock(self_attention_block=msa_block,
+                                              feed_forward_block=mlp_block,
+                                              dropout=mlp_dropout)
+            blocks.append(this_encoder_block)
+
+        self.transformer_encoder = nn.Sequential(*blocks)
 
         # 10. Create classifier head
         self.classifier = nn.Sequential(
