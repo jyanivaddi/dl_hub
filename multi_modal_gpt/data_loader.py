@@ -54,21 +54,21 @@ class ImageEmbedCaptionDataset(Dataset):
     def __getitem__(self, idx):
 
         # get image embeddings
-        img_embds = self.ds[self.image_ids[idx]][self.image_embeddings_key]
+        image_features = self.ds[self.image_ids[idx]][self.image_embeddings_key]
         
         # get caption
         caption = self.ds[self.image_ids[idx]][self.caption_key]
         caption_encoded = self.tokenizer(caption, return_tensors="pt", return_attention_mask=False)
-        num_padding_tokens_input = self.max_len_of_sentence - (1+512+len(caption_encoded)+1)
-        num_padding_tokens_output = self.max_len_of_sentence - (1+512+len(caption_encoded))
+        num_padding_tokens_input = self.max_len_of_sentence - (1+512+1)
+        num_padding_tokens_output = self.max_len_of_sentence - (1+len(caption_encoded))
 
             
         # Add <s> and </s> token
         x = torch.cat(
             [
                 self.bos_token,
-                img_embds,
-                caption_encoded,
+                image_features,
+                #caption_encoded,
                 self.eos_token,
                 torch.tensor([self.pad_token] * num_padding_tokens_input, dtype=torch.int64),
             ],
@@ -77,7 +77,6 @@ class ImageEmbedCaptionDataset(Dataset):
         # Add only the <s>
         y = torch.cat(
             [
-                self.bos_token*len(img_embds),
                 self.bos_token,
                 caption_encoded,
                 self.eos_token,
@@ -89,7 +88,8 @@ class ImageEmbedCaptionDataset(Dataset):
         return {
             "x": x,
             "y": y,
-            "input_sentences": input_text,
+            "caption": caption,
+            "image_features": image_features
         }
 
     def collate_samples(self, batch):
