@@ -21,7 +21,7 @@ def fetch_captions_and_images(json_path):
         image_ids = []
         annotations = data['annotations']
         images = data['images']
-        for annotation,image in zip(annotations, image):
+        for annotation,image in zip(annotations, images):
             captions[annotation['image_id']] = annotation['caption']
             image_paths[image['id']] = image['coco_url']
             image_ids.append(image['id'])

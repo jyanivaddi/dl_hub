@@ -118,7 +118,7 @@ if __name__ == '__main__':
 
 
     # Define dataset and dataloaders
-    captions, raw_images_list, image_ids_list = fetch_captions_and_images(json_path)
+    captions, raw_images_list, images_ids_list = fetch_captions_and_images(json_path)
     images_ids_list = np.array(images_ids_list)
     rand_indices = np.arange(len(images_ids_list))
     np.random.shuffle(rand_indices)
