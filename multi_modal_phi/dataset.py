@@ -2,7 +2,6 @@ import requests
 import json
 from torch.utils.data import Dataset, DataLoader
 
-
 def fetch_captions_and_images(json_path):
     """
     Read a JSON file and return its contents as a dictionary.
@@ -13,29 +12,24 @@ def fetch_captions_and_images(json_path):
     Returns:
     - dict: The contents of the JSON file as a dictionary.
     """
-    try:
-        with open(json_path, 'r') as file:
-            data = json.load(file)
-        captions = {}
-        image_paths = {}
-        image_ids = []
-        annotations = data['annotations']
-        images = data['images']
+    with open(json_path, 'r') as file:
+        data = json.load(file)
+    captions = {}
+    image_paths = {}
+    image_ids = []
+    annotations = data['annotations']
+    images = data['images']
 
-        for img in images:
-            image_paths[img['id']] = img['coco_url']
-            image_ids.append(img['id'])
+    for img in images:
+        image_paths[img['id']] = img['coco_url']
+        image_ids.append(img['id'])
+    
+    for annotation in annotations:
+        captions[annotation['image_id']] = annotation['caption']
+    
+    print(f"total image ids: {len(image_paths)}, total images: {len(image_paths)}, total captions: {len(captions)}")
+    return captions, image_paths, image_ids
 
-        for annotation in annotations:
-            captions[annotation['image_id']] = annotation['caption']
-
-        print(f"total image ids: {len(image_paths)}, total images: {len(image_paths)}, total captions: {len(captions)}")
-        return captions, image_paths, image_ids
-
-    except FileNotFoundError:
-        print(f"Error: File not found - {captions_path}")
-    except json.JSONDecodeError:
-        print(f"Error: Unable to decode JSON in file - {captions_path}")
 
 
 def calc_image_embeds(image_url, model, preprocessor, device):
@@ -53,8 +47,8 @@ def calc_image_embeds(image_url, model, preprocessor, device):
 class PreTrainDataset(Dataset):
 
     def __init__(self, 
-                 raw_images_list,
                  image_ids,
+                 raw_images_list,
                  captions,
                  tokenizer, 
                  clip_model,

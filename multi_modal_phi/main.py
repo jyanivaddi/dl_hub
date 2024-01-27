@@ -118,32 +118,32 @@ if __name__ == '__main__':
 
 
     # Define dataset and dataloaders
-    captions, raw_images_list, images_ids_list = fetch_captions_and_images(json_path)
-    images_ids_list = np.array(images_ids_list)
-    rand_indices = np.arange(len(images_ids_list))
+    captions, raw_images_list, image_ids_list = fetch_captions_and_images(json_path)
+    image_ids_list = np.array(image_ids_list)
+    rand_indices = np.arange(len(image_ids_list))
     np.random.shuffle(rand_indices)
+    val_indices = rand_indices[:100]
+    train_indices = rand_indices[100:]
+    train_image_ids = image_ids_list[train_indices]
+    val_image_ids = image_ids_list[val_indices]
 
     # lets keep val size to 100
-    val_captions, train_captions = captions[rand_indices[:100]], captions[rand_indices[100:]] 
-    val_images_list, train_images_list = raw_images_list[rand_indices[:100]], raw_images_list[rand_indices[100:]]
-    val_image_ids, train_image_ids = images_ids_list[rand_indices[:100]], images_ids_list[rand_indices[100:]]
+    print(f"Train dataset size: {len(train_indices)}")
+    print(f"Valid dataset size: {len(val_indices)}")
 
-    print(f"Train dataset size: {len(train_images_list)}")
-    print(f"Valid dataset size: {len(val_images_list)}")
 
-    
-    train_ds = PreTrainDataset(train_images_list, 
-                               train_image_ids, 
-                               train_captions, 
+    train_ds = PreTrainDataset(train_image_ids, 
+                               raw_images_list, 
+                               captions, 
                                phi_tokenizer,
                                clip_model,
                                clip_preprocessor,
                                device,
                                seq_len=seq_len)
 
-    train_ds = PreTrainDataset(val_images_list, 
-                               val_image_ids, 
-                               val_captions, 
+    train_ds = PreTrainDataset(val_image_ids, 
+                               raw_images_list, 
+                               captions, 
                                phi_tokenizer,
                                clip_model,
                                clip_preprocessor,
