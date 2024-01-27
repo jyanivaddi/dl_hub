@@ -31,8 +31,7 @@ def fetch_captions_and_images(json_path):
     return captions, image_paths, image_ids
 
 
-
-def get_image_embeddings(image_url, model, preprocessor, device):
+def get_image_embeddings(image_url, model, preprocessor, device=None):
     """
     This method computes the clip embeddings for a given image, after preprocessing it according to the model
     """
@@ -42,7 +41,6 @@ def get_image_embeddings(image_url, model, preprocessor, device):
     with torch.no_grad():
         outputs = model(**processed_image)
     return outputs.last_hidden_state.squeeze()
-
 
 class PreTrainDataset(Dataset):
 
@@ -62,6 +60,7 @@ class PreTrainDataset(Dataset):
         self.clip_preprocessor = clip_preprocessor
         self.bos_token = self.tokenizer.bos_token
         self.eos_token = self.tokenizer.eos_token
+        self.eos_token_id = 50256
         self.COMMENT_TOKEN_ID = 23893
         self.seq_len = seq_len
         self.captions = captions
@@ -77,14 +76,14 @@ class PreTrainDataset(Dataset):
 
         # get image embeddings
         this_img_id = "{:012d}".format(int(self.image_ids[idx]))
-        image_embeddings = get_image_embeddings(self.raw_images_list[this_img_id], clip_model, clip_preprocessor)
+        image_embeddings = get_image_embeddings(self.raw_images_list[int(self.image_ids[idx])], clip_model, clip_preprocessor)
         
         # get caption
         caption = self.captions[int(this_img_id)]
         tokenized_caption = self.tokenize_caption(caption)
         
         return {
-            "image_embeddings": image_embeddings,
+            "image_embeddings": image_embeddings.unsqueeze(0),
             "caption": caption,
             "tokenized_caption": tokenized_caption,
             "token_len": len(tokenized_caption)
@@ -129,10 +128,11 @@ class PreTrainDataset(Dataset):
             batch_x = torch.cat(
                 [
                     x['tokenized_caption'],
-                    torch.tensor([self.eos_token] * num_padding_tokens, dtype=torch.int64),
+                    torch.tensor([self.eos_token_id] * num_padding_tokens, dtype=torch.int64),
                 ],
                 dim=0,
             )
+            print(batch_x)
             tokenized_captions_list.append(batch_x)
             image_embeddings_list.append(x['image_embeddings'])
             captions_list.append(x['caption'])
@@ -140,7 +140,6 @@ class PreTrainDataset(Dataset):
         #print("inside get item and I am returning the dict list!")
         return {
             "image_embeddings": torch.vstack(image_embeddings_list),
-            "tokenized_captions": torch.vstack(tokenized_captions_list),
+            "tokenized_captions": torch.vstack(tokenized_captions_list).unsqueeze(1),
             "captions": captions_list,
         }
-

@@ -112,9 +112,8 @@ if __name__ == '__main__':
 
     # Define the models and tokenizers
     clip_model = CLIPVisionModel.from_pretrained("openai/clip-vit-base-patch32")
-    clip_preprocess = AutoProcessor.from_pretrained("openai/clip-vit-base-patch32")
+    clip_preprocessor = AutoProcessor.from_pretrained("openai/clip-vit-base-patch32")
     phi_tokenizer = AutoTokenizer.from_pretrained("microsoft/phi-2")
-
 
 
     # Define dataset and dataloaders
@@ -131,24 +130,23 @@ if __name__ == '__main__':
     print(f"Train dataset size: {len(train_indices)}")
     print(f"Valid dataset size: {len(val_indices)}")
 
-
     train_ds = PreTrainDataset(train_image_ids, 
-                               raw_images_list, 
-                               captions, 
-                               phi_tokenizer,
-                               clip_model,
-                               clip_preprocessor,
-                               device,
-                               seq_len=seq_len)
+                                raw_images_list, 
+                                captions, 
+                                phi_tokenizer,
+                                clip_model,
+                                clip_preprocessor,
+                                device,
+                                seq_len=seq_len)
 
     val_ds = PreTrainDataset(val_image_ids, 
-                               raw_images_list, 
-                               captions, 
-                               phi_tokenizer,
-                               clip_model,
-                               clip_preprocessor,
-                               device,
-                               seq_len=seq_len)
+                                raw_images_list, 
+                                captions, 
+                                phi_tokenizer,
+                                clip_model,
+                                clip_preprocessor,
+                                device,
+                                seq_len=seq_len)
 
     train_dataloader = DataLoader(dataset = train_ds,
                                 batch_size = batch_size,
@@ -160,6 +158,7 @@ if __name__ == '__main__':
                                 num_workers = 1,
                                 collate_fn = val_ds.collate_samples,
                                 shuffle = True)
+
 
     # Define multimodal model
     multimodal_gpt_model = LitMultiModalGPT(projection_layer_in_channels,

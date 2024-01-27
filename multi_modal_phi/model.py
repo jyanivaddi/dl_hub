@@ -44,7 +44,6 @@ class SimpleLinearBlock(nn.Module):
             nn.Linear(in_size, out_size),
             nn.GELU()
             )
-            
         
     def forward(self,x):
         return self.proj(self.pre_norm(x))
@@ -58,7 +57,6 @@ class LitMultiModalGPT(LightningModule):
     def __init__(self,
                  projection_layer_in_channels,
                  projection_layer_out_channels,
-                 hidden_size = 32,
                  num_validation_examples=2,
                  num_training_steps=100000):
         super().__init__()
@@ -71,7 +69,7 @@ class LitMultiModalGPT(LightningModule):
         self.predicted_list = []
         self.expected_list = []
         self.save_hyperparameters(ignore=['loss_criterion', 'epoch'])
-        self.projection_layer = SimpleLinearBlock(projection_layer_in_channels,projection_layer_out_channels, hidden_size=hidden_size)
+        self.projection_layer = SimpleLinearBlock(projection_layer_in_channels,projection_layer_out_channels)
         self.llm_model = AutoModelForCausalLM.from_pretrained("microsoft/phi-2", trust_remote_code=True)
         self.tokenizer = AutoTokenizer.from_pretrained("microsoft/phi-2")
         self.train_loss_values = []
