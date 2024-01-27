@@ -21,13 +21,17 @@ def fetch_captions_and_images(json_path):
         image_ids = []
         annotations = data['annotations']
         images = data['images']
-        print(len(images))
-        print(images[0])
-        for annotation,img in zip(annotations, images):
-            captions[annotation['image_id']] = annotation['caption']
+
+        for img in images:
             image_paths[img['id']] = img['coco_url']
             image_ids.append(img['id'])
+
+        for annotation in annotations:
+            captions[annotation['image_id']] = annotation['caption']
+
+        print(f"total image ids: {len(image_paths)}, total images: {len(image_paths)}, total captions: {len(captions)}")
         return captions, image_paths, image_ids
+
     except FileNotFoundError:
         print(f"Error: File not found - {captions_path}")
     except json.JSONDecodeError:
