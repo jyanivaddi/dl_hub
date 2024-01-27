@@ -59,13 +59,13 @@ class PrintAccuracyAndLoss(Callback):
             print(f"Step: {trainer.global_step}: train_loss={train_loss:.4f}")
 
 
-def train_multimodal_gpt_model(model, train_dataloader, val_dataloader, ckpt_path=None, max_training_steps=2):
+def train_multimodal_gpt_model(model, train_dataloader, val_dataloader, logger=None, ckpt_path=None, max_training_steps=2):
     trainer = Trainer(
         enable_checkpointing=True,
         max_steps=max_training_steps,
         accelerator="auto", #"auto" if torch.cuda.is_available() else "cpu",
         devices = 1, 
-        logger=wandb_logger,
+        logger=logger,
         callbacks=[LearningRateMonitor(logging_interval="step"),
                    TQDMProgressBar(refresh_rate=10),
                    PeriodicCheckpoint(check_point_save_dir, save_freq, verbose=True),
@@ -168,4 +168,4 @@ if __name__ == '__main__':
     multimodal_gpt_model.set_optimizer(optimizer)
 
     # define and train the model
-    trainer = train_multimodal_gpt_model(multimodal_gpt_model, train_dataloader, val_dataloader, max_training_steps=max_training_steps)
+    trainer = train_multimodal_gpt_model(multimodal_gpt_model, train_dataloader, val_dataloader, logger = wandb_logger, max_training_steps=max_training_steps)

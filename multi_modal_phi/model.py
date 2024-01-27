@@ -103,7 +103,7 @@ class LitMultiModalGPT(LightningModule):
    
     def forward(self, batch):
         x = batch['image_embeddings']
-        targets = batch['tokenized_caption']
+        targets = batch['tokenized_captions']
         x = self.projection_layer(x)
         outputs_dict = self.llm_model(inputs_embeds = x,
                                      labels = targets,
@@ -131,7 +131,7 @@ class LitMultiModalGPT(LightningModule):
             #self.expected_list.append(batch['caption'])
             # print the source, target, and the model output
             #print("*****************************************")
-            input_text = f"{f'caption: ' :>12}{batch['caption'][0]}"
+            input_text = f"{f'caption: ' :>12}{batch['captions'][0]}"
             pred_text = f"{f'predicted: ' :>12}{predicted}"
             print(f"*****************************************\n{input_text}\n{pred_text}")
             # log a W&B Table that has a text caption, an image and audio
@@ -145,7 +145,7 @@ class LitMultiModalGPT(LightningModule):
 
 
     def training_step_all_together(self, batch):
-        targets = batch['tokenized_caption']  # (B, seq_len)
+        targets = batch['tokenized_captions']  # (B, seq_len)
         llm_inputs_embeds = self.proj_output(batch['image_embeddings'])# (B, 32, 2560)
 
         next_embeds = self.llm_model.model.embed_tokens(torch.tensor(self.COMMENT_TOKEN_ID, dtype=torch.int64).to(llm_inputs_embeds.device)).unsqueeze(0).unsqueeze(0) # 
@@ -162,7 +162,7 @@ class LitMultiModalGPT(LightningModule):
 
 
     def training_step(self, batch):
-        targets = batch['tokenized_caption']  # (B, seq_len)
+        targets = batch['tokenized_captions']  # (B, seq_len)
         #print(targets.shape)
         max_size = len(targets)
         pos = 0
