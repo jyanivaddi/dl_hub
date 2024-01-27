@@ -32,13 +32,13 @@ def fetch_captions_and_images(json_path):
 
 
 
-def calc_image_embeds(image_url, model, preprocessor, device):
+def get_image_embeddings(image_url, model, preprocessor, device):
     """
     This method computes the clip embeddings for a given image, after preprocessing it according to the model
     """
     image = Image.open(requests.get(image_url, stream=True).raw)
 
-    processed_image = preprocessor(images=img, return_tensors="pt")
+    processed_image = preprocessor(images=image, return_tensors="pt")
     with torch.no_grad():
         outputs = model(**processed_image)
     return outputs.last_hidden_state.squeeze()
@@ -60,7 +60,6 @@ class PreTrainDataset(Dataset):
         self.ds = None
         self.clip_model = clip_model
         self.clip_preprocessor = clip_preprocessor
-        self.captions_key = captions_key
         self.bos_token = self.tokenizer.bos_token
         self.eos_token = self.tokenizer.eos_token
         self.COMMENT_TOKEN_ID = 23893
@@ -130,7 +129,7 @@ class PreTrainDataset(Dataset):
             batch_x = torch.cat(
                 [
                     x['tokenized_caption'],
-                    torch.tensor([self.eos_token] * num_padding_tokens_input, dtype=torch.int64),
+                    torch.tensor([self.eos_token] * num_padding_tokens, dtype=torch.int64),
                 ],
                 dim=0,
             )

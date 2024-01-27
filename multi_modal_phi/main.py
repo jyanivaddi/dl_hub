@@ -141,7 +141,7 @@ if __name__ == '__main__':
                                device,
                                seq_len=seq_len)
 
-    train_ds = PreTrainDataset(val_image_ids, 
+    val_ds = PreTrainDataset(val_image_ids, 
                                raw_images_list, 
                                captions, 
                                phi_tokenizer,
@@ -153,12 +153,12 @@ if __name__ == '__main__':
     train_dataloader = DataLoader(dataset = train_ds,
                                 batch_size = batch_size,
                                 num_workers = 1,
-                                collate_fn = None,
+                                collate_fn = train_ds.collate_samples,
                                 shuffle = True)
     val_dataloader = DataLoader(dataset = val_ds,
                                 batch_size = 1,
                                 num_workers = 1,
-                                collate_fn = None,
+                                collate_fn = val_ds.collate_samples,
                                 shuffle = True)
 
     # Define multimodal model
