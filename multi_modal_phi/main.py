@@ -26,7 +26,7 @@ from pytorch_lightning.callbacks import Callback
 import torchmetrics
 import wandb
 
-from dataset import fetch_captions_and_images, PreTrainDataset
+from .dataset import fetch_captions_and_images, PreTrainDataset
 
 
 class PeriodicCheckpoint(ModelCheckpoint):
